@@ -70,11 +70,12 @@ z-index: 200;
 <div id="gameContainer">
 <h1>SPACE INVADERS<br>MILEI vs AXEL</h1>
 <div id="info">
-Nivel: <span id="level">1</span> | Puntos: <span id="points">0000</span> | Vidas: <span id="lives">10</span>
+Nivel: <span id="level">1</span> | Puntos: <span id="points">0000</span> | Vidas: <span id="lives">20</span>
 </div>
 <canvas id="game" width="600" height="800"></canvas>
-<p id="instructions">Toca y arrastra para mover el jugador<br>Toca cualquier parte para disparar</p>
-<p style="opacity: 0.6;">by Mariano Damian ver 2.01</p>
+<p id="instructions">Celu: Toca y arrastra para mover • Toca para disparar<br>
+Compu: ← → Mover | ESPACIO = Disparar | P = Pausa</p>
+<p style="opacity: 0.6;">by Mariano Damian ver 2.03</p>
 </div>
 <script>
 const canvas = document.getElementById('game');
@@ -82,12 +83,12 @@ const ctx = canvas.getContext('2d');
 const scoreEl = document.getElementById('points');
 const levelEl = document.getElementById('level');
 const livesEl = document.getElementById('lives');
-let score = 0, level = 1, lives = 10;
+let score = 0, level = 1, lives = 20; // ← Cambiado a 20
 let gameOver = false, paused = false;
 const player = { x: 270, y: 720, width: 60, height: 50, speed: 9 };
 let bullets = [], enemyBullets = [], enemies = [];
 const enemyRows = 5;
-const enemyCols = 8; // un poco menos para que quepa mejor en vertical
+const enemyCols = 8;
 let keys = {};
 let enemyMoveTimer = 0;
 let enemyMoveInterval = 30;
@@ -95,7 +96,7 @@ let isTouching = false;
 // Imágenes
 const mileiImg = new Image(); mileiImg.src = "milei.jpg";
 const axelImg = new Image(); axelImg.src = "axel.jpg";
-// Ajustar canvas al tamaño real de la pantalla (manteniendo proporción)
+// Resize canvas
 function resizeCanvas() {
 const maxW = Math.min(600, window.innerWidth * 0.95);
 const maxH = window.innerHeight - 160;
@@ -111,7 +112,7 @@ canvas.style.height = h + 'px';
 }
 window.addEventListener('resize', resizeCanvas);
 window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 300));
-// ==================== CONTROLES TÁCTILES ====================
+// Controles táctiles
 canvas.addEventListener('touchstart', e => {
 e.preventDefault();
 if (gameOver || paused) return;
@@ -132,7 +133,7 @@ player.x = touchX - player.width / 2;
 player.x = Math.max(0, Math.min(600 - player.width, player.x));
 }, { passive: false });
 canvas.addEventListener('touchend', () => { isTouching = false; });
-// Teclado (para probar en desktop)
+// Teclado
 window.addEventListener('keydown', e => {
 keys[e.key] = true;
 if (e.key === ' ' && !gameOver && !paused) shoot();
@@ -243,7 +244,7 @@ if (edge) {
 enemies.forEach(e => { if (e.alive) e.y += 45; });
 }
 }
-// Colisiones jugador → enemigos
+// Colisiones balas → enemigos
 for (let i = bullets.length - 1; i >= 0; i--) {
 const b = bullets[i];
 for (let j = enemies.length - 1; j >= 0; j--) {
@@ -279,20 +280,19 @@ gameOver = true;
 if (enemies.every(e => !e.alive)) {
 level++;
 levelEl.textContent = level;
-lives = Math.min(10, lives + 2);
+lives = Math.min(25, lives + 3); // +3 vidas por nivel (máx 25)
 livesEl.textContent = lives;
 initLevel();
 }
 scoreEl.textContent = String(score).padStart(4, '0');
 if (gameOver) {
-alert("GAME OVER\n\nPuntos: " + score + "\nNivel: " + level);
+alert("GAME OVER\n\nPuntos: " + score + "\nNivel alcanzado: " + level);
 resetGame();
 }
 }
 function draw() {
 ctx.fillStyle = '#000011';
 ctx.fillRect(0, 0, 600, 800);
-// Estrellas
 ctx.fillStyle = '#fff';
 for (let i = 0; i < 80; i++) {
 ctx.fillRect((i*19)%600, (i*31)%800, 1.8, 1.8);
@@ -307,12 +307,12 @@ draw();
 requestAnimationFrame(gameLoop);
 }
 function resetGame() {
-score = 0; level = 1; lives = 10;
+score = 0; level = 1; lives = 20; // ← 20 vidas al reiniciar
 player.x = 270;
 bullets = []; enemyBullets = [];
 scoreEl.textContent = '0000';
 levelEl.textContent = '1';
-livesEl.textContent = '10';
+livesEl.textContent = '20';
 initLevel();
 gameOver = false;
 paused = false;
