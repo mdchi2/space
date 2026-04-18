@@ -60,7 +60,7 @@ font-weight: bold;
 pointer-events: none;
 z-index: 200;
 }
-.kuka { font-size: 70px; color: #ff0; text-shadow: 0 0 20px #f00; animation: kukaAnim 1.2s forwards; }
+.kuka { font-size: 68px; color: #ff0; text-shadow: 0 0 20px #f00; animation: kukaAnim 1.2s forwards; }
 .gato { font-size: 28px; color: #0ff; text-shadow: 0 0 12px #0ff; animation: gatoAnim 0.9s forwards; }
 @keyframes kukaAnim { 0% { opacity: 1; transform: translate(-50%, -50%) scale(0.6); } 100% { opacity: 0; transform: translate(-50%, -80%) scale(1.4); } }
 @keyframes gatoAnim { 0% { opacity: 1; transform: translate(-50%, -50%) scale(0.8); } 100% { opacity: 0; transform: translate(-50%, -130%) scale(1.4); } }
@@ -75,7 +75,7 @@ Nivel: <span id="level">1</span> | Puntos: <span id="points">0000</span> | Vidas
 <canvas id="game" width="600" height="800"></canvas>
 <p id="instructions">Celu: Toca y arrastra para mover • Toca para disparar<br>
 Compu: ← → Mover | ESPACIO = Disparar | P = Pausa</p>
-<p style="opacity: 0.6;">by Mariano Damian ver 2.05 - Modo Infinito</p>
+<p style="opacity: 0.6;">by Mariano Damian ver 2.07 - Modo Infinito</p>
 </div>
 <script>
 const canvas = document.getElementById('game');
@@ -96,6 +96,14 @@ let isTouching = false;
 // Imágenes
 const mileiImg = new Image(); mileiImg.src = "milei.jpg";
 const axelImg = new Image(); axelImg.src = "axel.jpg";
+// ==================== FRASES ====================
+const kukaPhrases = [
+"KUKA", "CHORROS", "CASTA", "LADRONES", "ZURDOS", "CASTRISTAS", "COMUNISTAS", "MONTONEROS", "KUKAS", "SE FUE"
+];
+const gatoPhrases = [
+"LOCO", "GENIO", "LIBERTAD", "VLLC", "MILEI", "AXEL KPO", "FUERA", "CAÍSTE",
+"GATO", "¡VAMOS!", "LIBERTARIO", "2027"
+];
 // Resize canvas
 function resizeCanvas() {
 const maxW = Math.min(600, window.innerWidth * 0.95);
@@ -151,6 +159,25 @@ height: 22,
 speed: 16
 });
 }
+// ==================== EFECTOS DE TEXTO ====================
+function showKuka() {
+const msg = document.createElement('div');
+msg.textContent = kukaPhrases[Math.floor(Math.random() * kukaPhrases.length)];
+msg.className = "kuka";
+msg.style.left = "50%";
+msg.style.top = "45%";
+document.getElementById('gameContainer').appendChild(msg);
+setTimeout(() => msg.remove(), 1400);
+}
+function showGato(x, y) {
+const msg = document.createElement('div');
+msg.textContent = gatoPhrases[Math.floor(Math.random() * gatoPhrases.length)];
+msg.className = "gato";
+msg.style.left = (x + 10) + "px";
+msg.style.top = (y + 15) + "px";
+document.getElementById('gameContainer').appendChild(msg);
+setTimeout(() => msg.remove(), 900);
+}
 // ==================== JUEGO ====================
 function initLevel() {
 enemies = [];
@@ -181,24 +208,6 @@ width: 7,
 height: 18,
 speed: 6.5 + level * 1.1
 });
-}
-function showKuka() {
-const msg = document.createElement('div');
-msg.textContent = "KUKA";
-msg.className = "kuka";
-msg.style.left = "50%";
-msg.style.top = "45%";
-document.getElementById('gameContainer').appendChild(msg);
-setTimeout(() => msg.remove(), 1400);
-}
-function showGato(x, y) {
-const msg = document.createElement('div');
-msg.textContent = "GATO";
-msg.className = "gato";
-msg.style.left = (x + 10) + "px";
-msg.style.top = (y + 15) + "px";
-document.getElementById('gameContainer').appendChild(msg);
-setTimeout(() => msg.remove(), 900);
 }
 function drawPlayer() {
 ctx.drawImage(axelImg, player.x, player.y, player.width, player.height);
@@ -260,17 +269,17 @@ break;
 }
 }
 }
-// Colisiones balas enemigas → jugador (solo efecto visual)
+// Colisiones balas enemigas → jugador
 for (let i = enemyBullets.length - 1; i >= 0; i--) {
 const b = enemyBullets[i];
 if (b.x < player.x + player.width && b.x + b.width > player.x &&
 b.y < player.y + player.height && b.y + b.height > player.y) {
 enemyBullets.splice(i, 1);
-showKuka(); // Solo muestra "KUKA", no resta vidas
+showKuka(); // Muestra frase random de kukas
 break;
 }
 }
-// Game Over solo si los enemigos llegan abajo
+// Game Over si enemigos llegan abajo
 if (enemies.some(e => e.alive && e.y + e.height > player.y - 30)) {
 gameOver = true;
 }
@@ -278,7 +287,6 @@ gameOver = true;
 if (enemies.every(e => !e.alive)) {
 level++;
 levelEl.textContent = level;
-livesEl.textContent = '∞'; // Mantiene infinito
 initLevel();
 }
 scoreEl.textContent = String(score).padStart(4, '0');
