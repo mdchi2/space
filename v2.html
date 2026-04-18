@@ -75,7 +75,7 @@ Nivel: <span id="level">1</span> | Puntos: <span id="points">0000</span> | Vidas
 <canvas id="game" width="600" height="800"></canvas>
 <p id="instructions">Celu: Toca y arrastra para mover • Toca para disparar<br>
 Compu: ← → Mover | ESPACIO = Disparar | P = Pausa</p>
-<p style="opacity: 0.6;">by Mariano Damian ver 2.03</p>
+<p style="opacity: 0.6;">by Mariano Damian ver 2.04</p>
 </div>
 <script>
 const canvas = document.getElementById('game');
@@ -83,7 +83,7 @@ const ctx = canvas.getContext('2d');
 const scoreEl = document.getElementById('points');
 const levelEl = document.getElementById('level');
 const livesEl = document.getElementById('lives');
-let score = 0, level = 1, lives = 20; // ← Cambiado a 20
+let score = 0, level = 1, lives = 20;
 let gameOver = false, paused = false;
 const player = { x: 270, y: 720, width: 60, height: 50, speed: 9 };
 let bullets = [], enemyBullets = [], enemies = [];
@@ -276,11 +276,11 @@ break;
 if (enemies.some(e => e.alive && e.y + e.height > player.y - 30)) {
 gameOver = true;
 }
-// Siguiente nivel
+// Siguiente nivel - REINICIA VIDAS A 20
 if (enemies.every(e => !e.alive)) {
 level++;
 levelEl.textContent = level;
-lives = Math.min(25, lives + 3); // +3 vidas por nivel (máx 25)
+lives = 20; // ← Aquí se reinician las vidas a 20
 livesEl.textContent = lives;
 initLevel();
 }
@@ -307,7 +307,7 @@ draw();
 requestAnimationFrame(gameLoop);
 }
 function resetGame() {
-score = 0; level = 1; lives = 20; // ← 20 vidas al reiniciar
+score = 0; level = 1; lives = 20;
 player.x = 270;
 bullets = []; enemyBullets = [];
 scoreEl.textContent = '0000';
