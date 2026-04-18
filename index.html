@@ -64,17 +64,18 @@ z-index: 200;
 .gato { font-size: 28px; color: #0ff; text-shadow: 0 0 12px #0ff; animation: gatoAnim 0.9s forwards; }
 @keyframes kukaAnim { 0% { opacity: 1; transform: translate(-50%, -50%) scale(0.6); } 100% { opacity: 0; transform: translate(-50%, -80%) scale(1.4); } }
 @keyframes gatoAnim { 0% { opacity: 1; transform: translate(-50%, -50%) scale(0.8); } 100% { opacity: 0; transform: translate(-50%, -130%) scale(1.4); } }
-</style></head>
+</style>
+</head>
 <body>
 <div id="gameContainer">
 <h1>SPACE INVADERS<br>MILEI vs AXEL</h1>
 <div id="info">
-Nivel: <span id="level">1</span> | Puntos: <span id="points">0000</span> | Vidas: <span id="lives">∞</span>
+Nivel: <span id="level">1</span> | Puntos: <span id="points">0000</span> | Vidas: <span id="lives">30</span>
 </div>
 <canvas id="game" width="600" height="800"></canvas>
 <p id="instructions">Celu: Toca y arrastra para mover • Toca para disparar<br>
 Compu: ← → Mover | ESPACIO = Disparar | P = Pausa</p>
-<p style="opacity: 0.6;">by Mariano Damian ver 2.05</p>
+<p style="opacity: 0.6;">by Mariano Damian ver 2.06</p>
 </div>
 <script>
 const canvas = document.getElementById('game');
@@ -82,8 +83,11 @@ const ctx = canvas.getContext('2d');
 const scoreEl = document.getElementById('points');
 const levelEl = document.getElementById('level');
 const livesEl = document.getElementById('lives');
-let score = 0, level = 1;
-let gameOver = false, paused = false;
+let score = 0;
+let level = 1;
+let lives = 30; // ← Cambiado a 30 vidas
+let gameOver = false;
+let paused = false;
 const player = { x: 270, y: 720, width: 60, height: 50, speed: 9 };
 let bullets = [], enemyBullets = [], enemies = [];
 const enemyRows = 5;
@@ -102,10 +106,7 @@ const maxH = window.innerHeight - 160;
 const ratio = 600 / 800;
 let w = maxW;
 let h = w / ratio;
-if (h > maxH) {
-h = maxH;
-w = h * ratio;
-}
+if (h > maxH) { h = maxH; w = h * ratio; }
 canvas.style.width = w + 'px';
 canvas.style.height = h + 'px';
 }
@@ -215,7 +216,7 @@ if (e.alive) ctx.drawImage(mileiImg, e.x, e.y, e.width, e.height);
 }
 function update() {
 if (gameOver || paused) return;
-// Teclado
+// Movimiento jugador (teclado)
 if (keys['ArrowLeft'] || keys['a']) player.x -= player.speed;
 if (keys['ArrowRight'] || keys['d']) player.x += player.speed;
 player.x = Math.max(0, Math.min(600 - player.width, player.x));
@@ -243,7 +244,7 @@ if (edge) {
 enemies.forEach(e => { if (e.alive) e.y += 45; });
 }
 }
-// Colisiones balas → enemigos
+// Colisiones balas jugador → enemigos
 for (let i = bullets.length - 1; i >= 0; i--) {
 const b = bullets[i];
 for (let j = enemies.length - 1; j >= 0; j--) {
@@ -259,30 +260,36 @@ break;
 }
 }
 }
-// Colisiones balas enemigas → jugador (solo efecto visual)
+// Colisiones balas enemigas → jugador (resta vida)
 for (let i = enemyBullets.length - 1; i >= 0; i--) {
 const b = enemyBullets[i];
 if (b.x < player.x + player.width && b.x + b.width > player.x &&
 b.y < player.y + player.height && b.y + b.height > player.y) {
 enemyBullets.splice(i, 1);
-showKuka(); // Solo muestra "KUKA", no resta vidas
+showKuka();
+lives--; // ← Resta vida
+livesEl.textContent = lives;
+if (lives <= 0) {
+gameOver = true;
+}
 break;
 }
 }
-// Game Over solo si los enemigos llegan abajo
+// Game Over por enemigos que llegan abajo
 if (enemies.some(e => e.alive && e.y + e.height > player.y - 30)) {
 gameOver = true;
 }
-// Siguiente nivel
+// Siguiente nivel → Reiniciar vidas a 30
 if (enemies.every(e => !e.alive)) {
 level++;
+lives = 30; // ← Aquí vuelve a 30 vidas
 levelEl.textContent = level;
-livesEl.textContent = '∞'; // Mantiene infinito
+livesEl.textContent = lives;
 initLevel();
 }
 scoreEl.textContent = String(score).padStart(4, '0');
 if (gameOver) {
-alert("GAME OVER\n\nPuntos: " + score + "\nNivel alcanzado: " + level + "\n\n¡Modo Vidas Infinitas!");
+alert(`GAME OVER\n\nPuntos: ${score}\nNivel alcanzado: ${level}\n\n¡Gracias por jugar!`);
 resetGame();
 }
 }
@@ -303,11 +310,15 @@ draw();
 requestAnimationFrame(gameLoop);
 }
 function resetGame() {
-score = 0; level = 1; player.x = 270;
-bullets = []; enemyBullets = [];
+score = 0;
+level = 1;
+lives = 30;
+player.x = 270;
+bullets = [];
+enemyBullets = [];
 scoreEl.textContent = '0000';
 levelEl.textContent = '1';
-livesEl.textContent = '∞';
+livesEl.textContent = '30';
 initLevel();
 gameOver = false;
 paused = false;
