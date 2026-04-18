@@ -54,6 +54,42 @@ opacity: 0.8;
 text-align: center;
 padding: 0 15px;
 }
+/* Globos de mensajes */
+.message {
+position: absolute;
+font-weight: bold;
+padding: 8px 14px;
+border-radius: 20px;
+border: 3px solid;
+pointer-events: none;
+z-index: 300;
+white-space: nowrap;
+font-size: 18px;
+animation: messagePop 4.2s forwards;
+box-shadow: 0 0 15px rgba(255,255,255,0.6);
+}
+.player-msg {
+background: rgba(0, 255, 255, 0.15);
+color: #0ff;
+border-color: #0ff;
+left: 50%;
+bottom: 180px;
+transform: translateX(-50%);
+}
+.enemy-msg {
+background: rgba(255, 215, 0, 0.15);
+color: #ff0;
+border-color: #ff0;
+left: 50%;
+top: 120px;
+transform: translateX(-50%);
+}
+@keyframes messagePop {
+0% { opacity: 0; transform: translate(-50%, 20px) scale(0.6); }
+15% { opacity: 1; transform: translate(-50%, 0) scale(1.05); }
+85% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+100% { opacity: 0; transform: translate(-50%, -30px) scale(0.9); }
+}
 .kuka, .gato {
 position: absolute;
 font-weight: bold;
@@ -70,12 +106,12 @@ z-index: 200;
 <div id="gameContainer">
 <h1>SPACE INVADERS<br>MILEI vs AXEL</h1>
 <div id="info">
-Nivel: <span id="level">1</span> | Puntos: <span id="points">0000</span><span id="lives"></span>
+Nivel: <span id="level">1</span> | Puntos: <span id="points">0000</span> | Vidas: <span id="lives">∞</span>
 </div>
 <canvas id="game" width="600" height="800"></canvas>
 <p id="instructions">Celu: Toca y arrastra para mover • Toca para disparar<br>
 Compu: ← → Mover | ESPACIO = Disparar | P = Pausa</p>
-<p style="opacity: 0.6;">by Mariano Damian ver 2.05</p>
+<p style="opacity: 0.6;">by Mariano Damian ver 2.07 - Modo Infinito</p>
 </div>
 <script>
 const canvas = document.getElementById('game');
@@ -96,6 +132,35 @@ let isTouching = false;
 // Imágenes
 const mileiImg = new Image(); mileiImg.src = "milei.jpg";
 const axelImg = new Image(); axelImg.src = "axel.jpg";
+// Función para mostrar mensajes aleatorios
+function showRandomMessage() {
+if (gameOver || paused) return;
+const container = document.getElementById('gameContainer');
+const isPlayerMsg = Math.random() < 0.5;
+const msg = document.createElement('div');
+msg.className = `message ${isPlayerMsg ? 'player-msg' : 'enemy-msg'}`;
+if (isPlayerMsg) {
+msg.textContent = "LOCO TIRANO";
+} else {
+msg.textContent = "VIVA LA LIBERTAD CARAJO";
+}
+container.appendChild(msg);
+setTimeout(() => msg.remove(), 4500);
+}
+// Mensajes aleatorios cada 3 a 7 segundos
+function startRandomMessages() {
+setTimeout(() => {
+if (!gameOver && !paused) {
+// 80% de probabilidad de mostrar mensaje en cada ciclo
+if (Math.random() < 0.8) {
+showRandomMessage();
+}
+}
+startRandomMessages(); // se llama a sí misma para continuar
+}, 3000 + Math.random() * 4000); // entre 3000ms y 7000ms
+}
+// Iniciar los mensajes aleatorios
+startRandomMessages();
 // Resize canvas
 function resizeCanvas() {
 const maxW = Math.min(600, window.innerWidth * 0.95);
@@ -216,21 +281,17 @@ if (e.alive) ctx.drawImage(mileiImg, e.x, e.y, e.width, e.height);
 }
 function update() {
 if (gameOver || paused) return;
-// Teclado
 if (keys['ArrowLeft'] || keys['a']) player.x -= player.speed;
 if (keys['ArrowRight'] || keys['d']) player.x += player.speed;
 player.x = Math.max(0, Math.min(600 - player.width, player.x));
-// Balas jugador
 for (let i = bullets.length - 1; i >= 0; i--) {
 bullets[i].y -= bullets[i].speed;
 if (bullets[i].y < -20) bullets.splice(i, 1);
 }
-// Balas enemigas
 for (let i = enemyBullets.length - 1; i >= 0; i--) {
 enemyBullets[i].y += enemyBullets[i].speed;
 if (enemyBullets[i].y > 820) enemyBullets.splice(i, 1);
 }
-// Movimiento enemigos
 enemyMoveTimer++;
 if (enemyMoveTimer > enemyMoveInterval) {
 enemyMoveTimer = 0;
@@ -244,7 +305,6 @@ if (edge) {
 enemies.forEach(e => { if (e.alive) e.y += 45; });
 }
 }
-// Colisiones balas → enemigos
 for (let i = bullets.length - 1; i >= 0; i--) {
 const b = bullets[i];
 for (let j = enemies.length - 1; j >= 0; j--) {
@@ -260,30 +320,27 @@ break;
 }
 }
 }
-// Colisiones balas enemigas → jugador (solo efecto visual)
 for (let i = enemyBullets.length - 1; i >= 0; i--) {
 const b = enemyBullets[i];
 if (b.x < player.x + player.width && b.x + b.width > player.x &&
 b.y < player.y + player.height && b.y + b.height > player.y) {
 enemyBullets.splice(i, 1);
-showKuka(); // Solo muestra "KUKA", no resta vidas
+showKuka();
 break;
 }
 }
-// Game Over solo si los enemigos llegan abajo
 if (enemies.some(e => e.alive && e.y + e.height > player.y - 30)) {
 gameOver = true;
 }
-// Siguiente nivel
 if (enemies.every(e => !e.alive)) {
 level++;
 levelEl.textContent = level;
-livesEl.textContent = '∞'; // Mantiene infinito
+livesEl.textContent = '∞';
 initLevel();
 }
 scoreEl.textContent = String(score).padStart(4, '0');
 if (gameOver) {
-alert("GAME OVER\n\nPuntos: " + score + "\nNivel alcanzado: " + level + "\n\n¡Modo Vidas Infinitas!");
+alert("GAME OVER\n\nPuntos: " + score + "\nNivel alcanzado: " + level);
 resetGame();
 }
 }
