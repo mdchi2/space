@@ -54,29 +54,28 @@ opacity: 0.8;
 text-align: center;
 padding: 0 15px;
 }
-.kuka, .gato, .chorro, .casta, .loco, .tirano {
+.kuka, .gato {
 position: absolute;
 font-weight: bold;
 pointer-events: none;
 z-index: 200;
 }
-.kuka, .chorro, .casta { font-size: 70px; color: #ff0; text-shadow: 0 0 20px #f00; animation: kukaAnim 1.2s forwards; }
-.gato, .loco, .tirano { font-size: 28px; color: #0ff; text-shadow: 0 0 12px #0ff; animation: gatoAnim 0.9s forwards; }
+.kuka { font-size: 70px; color: #ff0; text-shadow: 0 0 20px #f00; animation: kukaAnim 1.2s forwards; }
+.gato { font-size: 28px; color: #0ff; text-shadow: 0 0 12px #0ff; animation: gatoAnim 0.9s forwards; }
 @keyframes kukaAnim { 0% { opacity: 1; transform: translate(-50%, -50%) scale(0.6); } 100% { opacity: 0; transform: translate(-50%, -80%) scale(1.4); } }
 @keyframes gatoAnim { 0% { opacity: 1; transform: translate(-50%, -50%) scale(0.8); } 100% { opacity: 0; transform: translate(-50%, -130%) scale(1.4); } }
 </style>
 </head>
 <body>
 <div id="gameContainer">
-<h1>SPACE INVADERS<br>
-MILEI vs AXEL</h1>
+<h1>SPACE INVADERS<br>MILEI vs AXEL</h1>
 <div id="info">
 Nivel: <span id="level">1</span> | Puntos: <span id="points">0000</span> | Vidas: <span id="lives">∞</span>
 </div>
 <canvas id="game" width="600" height="800"></canvas>
 <p id="instructions">Celu: Toca y arrastra para mover • Toca para disparar<br>
 Compu: ← → Mover | ESPACIO = Disparar | P = Pausa</p>
-<p style="opacity: 0.6;">by Mariano Damian ver 2.08 - Modo Infinito</p>
+<p style="opacity: 0.6;">by Mariano Damian ver 2.05 - Modo Infinito</p>
 </div>
 <script>
 const canvas = document.getElementById('game');
@@ -97,28 +96,6 @@ let isTouching = false;
 // Imágenes
 const mileiImg = new Image(); mileiImg.src = "milei.jpg";
 const axelImg = new Image(); axelImg.src = "axel.jpg";
-// ==================== MENSAJES ====================
-function showMessage(text, className, x = "50%", y = "45%") {
-const msg = document.createElement('div');
-msg.textContent = text;
-msg.className = className;
-msg.style.left = x;
-msg.style.top = y;
-document.getElementById('gameContainer').appendChild(msg);
-setTimeout(() => msg.remove(), className.includes('kuka') || className.includes('chorro') || className.includes('casta') ? 1400 : 900);
-}
-function showKuka() {
-const messages = ["KUKA", "KUKAS", "CHORROS", "CASTA"];
-const randomMsg = messages[Math.floor(Math.random() * messages.length)];
-showMessage(randomMsg, "kuka");
-}
-function showGato(x, y) {
-const messages = ["GATO", "GATO", "LOCO", "TIRANO"];
-const randomMsg = messages[Math.floor(Math.random() * messages.length)];
-const leftPos = (x + 10) + "px";
-const topPos = (y + 15) + "px";
-showMessage(randomMsg, "gato", leftPos, topPos);
-}
 // Resize canvas
 function resizeCanvas() {
 const maxW = Math.min(600, window.innerWidth * 0.95);
@@ -205,6 +182,24 @@ height: 18,
 speed: 6.5 + level * 1.1
 });
 }
+function showKuka() {
+const msg = document.createElement('div');
+msg.textContent = "KUKA";
+msg.className = "kuka";
+msg.style.left = "50%";
+msg.style.top = "45%";
+document.getElementById('gameContainer').appendChild(msg);
+setTimeout(() => msg.remove(), 1400);
+}
+function showGato(x, y) {
+const msg = document.createElement('div');
+msg.textContent = "GATO";
+msg.className = "gato";
+msg.style.left = (x + 10) + "px";
+msg.style.top = (y + 15) + "px";
+document.getElementById('gameContainer').appendChild(msg);
+setTimeout(() => msg.remove(), 900);
+}
 function drawPlayer() {
 ctx.drawImage(axelImg, player.x, player.y, player.width, player.height);
 }
@@ -265,17 +260,17 @@ break;
 }
 }
 }
-// Colisiones balas enemigas → jugador
+// Colisiones balas enemigas → jugador (solo efecto visual)
 for (let i = enemyBullets.length - 1; i >= 0; i--) {
 const b = enemyBullets[i];
 if (b.x < player.x + player.width && b.x + b.width > player.x &&
 b.y < player.y + player.height && b.y + b.height > player.y) {
 enemyBullets.splice(i, 1);
-showKuka(); // Ahora muestra KUKA, KUKAS, CHORROS o CASTA aleatoriamente
+showKuka(); // Solo muestra "KUKA", no resta vidas
 break;
 }
 }
-// Game Over si enemigos llegan abajo
+// Game Over solo si los enemigos llegan abajo
 if (enemies.some(e => e.alive && e.y + e.height > player.y - 30)) {
 gameOver = true;
 }
@@ -283,6 +278,7 @@ gameOver = true;
 if (enemies.every(e => !e.alive)) {
 level++;
 levelEl.textContent = level;
+livesEl.textContent = '∞'; // Mantiene infinito
 initLevel();
 }
 scoreEl.textContent = String(score).padStart(4, '0');
